@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import torch.autograd as autograd
 
-import functions.ctc as ctc
+from warpctc_pytorch import CTCLoss
 from . import model
 from .ctc_decoder import decode
 
@@ -33,9 +33,8 @@ class CTC(model.Model):
 
     def loss(self, batch):
         x, y, x_lens, y_lens = self.collate(*batch)
-        out = self.forward_impl(x)
-
-        loss_fn = ctc.CTCLoss()
+        out = self.forward_impl(x).transpose(0, 1).contiguous()
+        loss_fn = CTCLoss(size_average=True)
         loss = loss_fn(out, y, x_lens, y_lens)
         return loss
 
@@ -47,9 +46,9 @@ class CTC(model.Model):
         y_lens = torch.IntTensor([len(l) for l in labels])
         y = torch.IntTensor([l for label in labels for l in label])
         batch = [x, y, x_lens, y_lens]
-        if self.volatile:
-            for v in batch:
-                v.volatile = True
+        #if self.volatile:
+        #    for v in batch:
+        #        v.volatile = True
         return batch
 
     def infer(self, batch):

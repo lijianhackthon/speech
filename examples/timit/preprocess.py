@@ -14,11 +14,13 @@ from speech.utils import data_helpers
 from speech.utils import wave
 
 WAV_EXT = "wv" # using wv since NIST took wav
-TEST_SPEAKERS = [ # Core test set from timit/readme.doc
+TEST_SPEAKERS_lower = [ # Core test set from timit/readme.doc
     'mdab0', 'mwbt0', 'felc0', 'mtas1', 'mwew0', 'fpas0',
     'mjmp0', 'mlnt0', 'fpkt0', 'mlll0', 'mtls0', 'fjlm0',
     'mbpm0', 'mklt0', 'fnlp0', 'mcmj0', 'mjdh0', 'fmgd0',
     'mgrt0', 'mnjm0', 'fdhc0', 'mjln0', 'mpam0', 'fmld0']
+
+TEST_SPEAKERS = [s.upper() for s in TEST_SPEAKERS_lower]
 
 def load_phone_map():
     with open("phones.60-48-39.map", 'r') as fid:
@@ -29,7 +31,7 @@ def load_phone_map():
     return m60_48, m48_39
 
 def load_transcripts(path):
-    pattern = os.path.join(path, "*/*/*.phn")
+    pattern = os.path.join(path, "*/*/*.PHN")
     m60_48, _ = load_phone_map()
     files = glob.glob(pattern)
     # Standard practic is to remove all "sa" sentences
@@ -53,7 +55,9 @@ def split_by_speaker(data, dev_speakers=50):
     speaker_dict = collections.defaultdict(list)
     for k, v in data.items():
         speaker_dict[speaker_id(k)].append((k, v))
-    speakers = speaker_dict.keys()
+    #speakers = speaker_dict.keys()
+    speakers = list(speaker_dict)
+    #print(speakers)
     for t in TEST_SPEAKERS:
         speakers.remove(t)
     random.shuffle(speakers)
@@ -63,7 +67,7 @@ def split_by_speaker(data, dev_speakers=50):
     return dev, test
 
 def convert_to_wav(path):
-    data_helpers.convert_full_set(path, "*/*/*/*.wav",
+    data_helpers.convert_full_set(path, "*/*/*/*.WAV",
             new_ext=WAV_EXT,
             use_avconv=False)
 
@@ -87,18 +91,18 @@ if __name__ == "__main__":
         help="Path where the dataset is saved.")
     args = parser.parse_args()
 
-    path = os.path.join(args.output_directory, "timit")
+    path = os.path.join(args.output_directory, "TIMIT")
     path = os.path.abspath(path)
 
     print("Converting files from NIST to standard wave format...")
     convert_to_wav(path)
-
+    
     print("Preprocessing train")
-    train = load_transcripts(os.path.join(path, "train"))
+    train = load_transcripts(os.path.join(path, "TRAIN"))
     build_json(train, path, "train")
 
     print("Preprocessing dev")
-    transcripts = load_transcripts(os.path.join(path, "test"))
+    transcripts = load_transcripts(os.path.join(path, "TEST"))
     dev, test = split_by_speaker(transcripts)
     build_json(dev, path, "dev")
 

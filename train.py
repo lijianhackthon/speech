@@ -15,6 +15,7 @@ import speech
 import speech.loader as loader
 import speech.models as models
 
+#import sys
 # TODO, (awni) why does putting this above crash..
 import tensorboard_logger as tb
 
@@ -28,9 +29,9 @@ def run_epoch(model, optimizer, train_ldr, it, avg_loss):
         optimizer.zero_grad()
         loss = model.loss(batch)
         loss.backward()
-
-        grad_norm = nn.utils.clip_grad_norm(model.parameters(), 200)
-        loss = loss.data[0]
+        grad_norm = nn.utils.clip_grad_norm_(model.parameters(), 200)
+        #loss = loss.data[0]
+        loss = loss.item()
 
         optimizer.step()
         prev_end_t = end_t
@@ -52,13 +53,15 @@ def eval_dev(model, ldr, preproc):
     losses = []; all_preds = []; all_labels = []
 
     model.set_eval()
-
-    for batch in tqdm.tqdm(ldr):
-        preds = model.infer(batch)
-        loss = model.loss(batch)
-        losses.append(loss.data[0])
-        all_preds.extend(preds)
-        all_labels.extend(batch[1])
+    print("Start eval_dev")
+    with torch.no_grad():
+        for batch in tqdm.tqdm(ldr):
+            batch = list(batch)
+            preds = model.infer(batch)
+            loss = model.loss(batch)
+            losses.append(loss.data[0])
+            all_preds.extend(preds)
+            all_labels.extend(batch[1])
 
     model.set_train()
 
@@ -83,7 +86,6 @@ def run(config):
                         preproc, batch_size)
     dev_ldr = loader.make_loader(data_cfg["dev_set"],
                         preproc, batch_size)
-
     # Model
     model_class = eval("models." + model_cfg["class"])
     model = model_class(preproc.input_dim,

@@ -39,7 +39,7 @@ class Model(nn.Module):
                           bidirectional=rnn_cfg["bidirectional"])
         self._encoder_dim = rnn_cfg["dim"]
 
-        self.volatile = False
+        #self.volatile = False
 
     def conv_out_size(self, n, dim):
         for c in self.conv.children():
@@ -89,14 +89,14 @@ class Model(nn.Module):
         Set the model to evaluation mode.
         """
         self.eval()
-        self.volatile = True
+        #self.volatile = True
 
     def set_train(self):
         """
         Set the model to training mode.
         """
         self.train()
-        self.volatile = False
+        #self.volatile = False
 
     def infer(self, x):
         """
